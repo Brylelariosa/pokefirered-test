@@ -324,6 +324,7 @@ static EWRAM_DATA struct PokerusIconObj * sPokerusIconObj = NULL;
 static EWRAM_DATA struct ShinyStarObjData * sShinyStarObjData = NULL;
 static EWRAM_DATA u8 sLastViewedMonIndex = 0;
 static EWRAM_DATA u8 sMoveSelectionCursorPos = 0;
+EWRAM_DATA u16 gGimmickMoves[PARTY_SIZE] = {0};
 static EWRAM_DATA u8 sMoveSwapCursorPos = 0;
 static EWRAM_DATA struct MonPicBounceState * sMonPicBounceState = NULL;
 
@@ -3648,6 +3649,16 @@ static void Task_HandleInput_SelectMove(u8 taskId)
             PokeSum_RemoveWindows(sMonSummaryScreen->curPageIndex);
             sMonSummaryScreen->curPageIndex--;
             sMonSummaryScreen->selectMoveInputHandlerState = 1;
+        }
+        else if (JOY_NEW(SELECT_BUTTON))
+        {
+            if (sMonSummaryScreen->isEnemyParty == FALSE
+                && sMoveSelectionCursorPos < 4
+                && sMonSummaryScreen->moveIds[sMoveSelectionCursorPos] != MOVE_NONE)
+            {
+                gGimmickMoves[sLastViewedMonIndex] = sMonSummaryScreen->moveIds[sMoveSelectionCursorPos];
+                PlaySE(SE_REGISTER);
+            }
         }
         break;
     case 1:
