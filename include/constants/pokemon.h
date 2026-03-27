@@ -300,5 +300,8 @@
 #define DEOXYS_CHECK_BATTLE_SPRITE      1
 #define DEOXYS_CHECK_TRADE_MAIN         3
 #define DEOXYS_CHECK_BATTLE_ANIM        5
+#define GIMMICK_MOVE_SLOT        4      // 5th move index (0-based)
+#define GIMMICK_USED_THIS_BATTLE 1
+#define GIMMICK_NOT_USED         0
 
 #endif // GUARD_CONSTANTS_POKEMON_H
