@@ -2239,7 +2239,6 @@ static void BattleStartClearSetData(void)
 
         // Gimmick system reset
         gBattleStruct->gimmickUsed[i] = FALSE;
-        gBattleStruct->gimmickMove[i] = MOVE_NONE;
     }
 
     for (i = 0; i < 2; i++)
