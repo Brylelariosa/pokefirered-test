@@ -4479,4 +4479,36 @@ static void HandleAction_ActionFinished(void)
     gBattleCommunication[ACTIONS_CONFIRMED_COUNT] = 0;
     gBattleScripting.multihitMoveEffect = 0;
     gBattleResources->battleScriptsStack->size = 0;
+    static void HandleAction_UseGimmickMove(void)
+{
+    gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
+
+    // Block if already used this battle
+    if (GIMMICK_MOVE_USED(gBattlerAttacker))
+    {
+        gBattlescriptCurrInstr = BattleScript_MoveTryingToUseButFailed;
+        gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
+        return;
+    }
+
+    // Block if no gimmick move is set
+    if (GIMMICK_MOVE_ID(gBattlerAttacker) == MOVE_NONE)
+    {
+        gBattlescriptCurrInstr = BattleScript_MoveTryingToUseButFailed;
+        gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
+        return;
+    }
+
+    // Execute the gimmick move like a normal move
+    gChosenMove = GIMMICK_MOVE_ID(gBattlerAttacker);
+    gCurrentMove = gChosenMove;
+    gBattle_BG0_X = 0;
+    gBattle_BG0_Y = 0;
+
+    // Mark as used — only once per battle!
+    SET_GIMMICK_USED(gBattlerAttacker);
+
+    gBattlescriptCurrInstr = BattleScript_GimmickMove;
+    gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
+}
 }
