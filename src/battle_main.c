@@ -3349,6 +3349,9 @@ static void HandleTurnActionSelectionState(void)
                 case B_ACTION_OLDMAN_THROW:
                     gBattleCommunication[gActiveBattler]++;
                     break;
+                case B_ACTION_USE_GIMMICK_MOVE:
+                    gBattleCommunication[gActiveBattler]++;
+                    break;
                 }
             }
             break;
