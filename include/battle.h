@@ -47,7 +47,7 @@
 #define B_ACTION_CANCEL_PARTNER            12 // when choosing an action
 #define B_ACTION_NOTHING_FAINTED           13 // when choosing an action
 #define B_ACTION_NONE                      0xFF
-
+#define B_ACTION_USE_GIMMICK_MOVE      14   // new action for gimmick button
 #define MAX_TRAINER_ITEMS 4
 
 enum {
@@ -725,4 +725,13 @@ extern u8 gBattleTerrain;
 extern struct MultiBattlePokemonTx gMultiPartnerParty[3];
 extern u16 gRandomTurnNumber;
 
+// Gimmick system helpers
+#define GIMMICK_MOVE_USED(battler)     (gBattleStruct->gimmickUsed[battler])
+#define GIMMICK_MOVE_ID(battler)       (gBattleStruct->gimmickMove[battler])
+#define SET_GIMMICK_USED(battler)      (gBattleStruct->gimmickUsed[battler] = TRUE)
+#define RESET_GIMMICK(battler)         \
+{                                      \
+    gBattleStruct->gimmickUsed[battler] = FALSE; \
+    gBattleStruct->gimmickMove[battler] = MOVE_NONE; \
+}
 #endif // GUARD_BATTLE_H
