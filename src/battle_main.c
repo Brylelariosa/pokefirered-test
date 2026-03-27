@@ -54,6 +54,7 @@ static void HandleAction_ThrowBait(void);
 static void HandleAction_ThrowRock(void);
 static void HandleAction_SafariZoneRun(void);
 static void HandleAction_OldManBallThrow(void);
+static void HandleAction_UseGimmickMove(void);
 static void HandleAction_TryFinish(void);
 static void HandleAction_NothingIsFainted(void);
 static void HandleAction_ActionFinished(void);
@@ -575,7 +576,7 @@ static void (*const sTurnActionsFuncsTable[])(void) =
     [B_ACTION_TRY_FINISH]             = HandleAction_TryFinish,
     [B_ACTION_FINISHED]               = HandleAction_ActionFinished,
     [B_ACTION_NOTHING_FAINTED]        = HandleAction_NothingIsFainted,
-    [B_ACTION_USE_GIMMICK_MOVE]
+    [B_ACTION_USE_GIMMICK_MOVE]       = HandleAction_UseGimmickMove,
 };
 
 static void (*const sEndTurnFuncsTable[])(void) =
@@ -4479,14 +4480,20 @@ static void HandleAction_ActionFinished(void)
     gBattleCommunication[ACTIONS_CONFIRMED_COUNT] = 0;
     gBattleScripting.multihitMoveEffect = 0;
     gBattleResources->battleScriptsStack->size = 0;
-    static void HandleAction_UseGimmickMove(void)
+}
+
+// Extern declarations for gimmick battle scripts (defined in data/battle_scripts/gimmick.inc)
+extern const u8 BattleScript_GimmickMove[];
+extern const u8 BattleScript_GimmickMoveFailed[];
+
+static void HandleAction_UseGimmickMove(void)
 {
     gBattlerAttacker = gBattlerByTurnOrder[gCurrentTurnActionNumber];
 
     // Block if already used this battle
     if (GIMMICK_MOVE_USED(gBattlerAttacker))
     {
-        gBattlescriptCurrInstr = BattleScript_MoveTryingToUseButFailed;
+        gBattlescriptCurrInstr = BattleScript_GimmickMoveFailed;
         gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
         return;
     }
@@ -4494,7 +4501,7 @@ static void HandleAction_ActionFinished(void)
     // Block if no gimmick move is set
     if (GIMMICK_MOVE_ID(gBattlerAttacker) == MOVE_NONE)
     {
-        gBattlescriptCurrInstr = BattleScript_MoveTryingToUseButFailed;
+        gBattlescriptCurrInstr = BattleScript_GimmickMoveFailed;
         gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
         return;
     }
@@ -4505,10 +4512,9 @@ static void HandleAction_ActionFinished(void)
     gBattle_BG0_X = 0;
     gBattle_BG0_Y = 0;
 
-    // Mark as used — only once per battle!
+    // Mark as used - only once per battle!
     SET_GIMMICK_USED(gBattlerAttacker);
 
     gBattlescriptCurrInstr = BattleScript_GimmickMove;
     gCurrentActionFuncId = B_ACTION_EXEC_SCRIPT;
-}
 }
