@@ -575,8 +575,30 @@ void HandleInputChooseMove(void)
             BattlePutTextOnWindow(gText_BattleSwitchWhich, B_WIN_SWITCH_PROMPT);
             gBattlerControllerFuncs[gActiveBattler] = HandleMoveSwitching;
         }
-    }
 }
+    }
+    else if (JOY_NEW(R_BUTTON))
+    {
+        // Gimmick move activation via R button
+        if (GIMMICK_MOVE_ID(gActiveBattler) != MOVE_NONE)
+        {
+            if (!GIMMICK_MOVE_USED(gActiveBattler))
+            {
+                PlaySE(SE_SELECT);
+                BtlController_EmitTwoReturnValues(1, B_ACTION_USE_GIMMICK_MOVE, 0);
+                PlayerBufferExecCompleted();
+                ResetPaletteFadeControl();
+                BeginNormalPaletteFade(0xF0000, 0, 0, 0, RGB_WHITE);
+            }
+            else
+            {
+                // Already used — play error sound
+                PlaySE(SE_FAILURE);
+            }
+        }
+    }
+   // ← end of HandleInputChooseMove
+
 
 // not used
 static u32 HandleMoveInputUnused(void)
