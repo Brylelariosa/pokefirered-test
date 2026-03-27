@@ -3657,7 +3657,7 @@ static void Task_HandleInput_SelectMove(u8 taskId)
                 && sMonSummaryScreen->moveIds[sMoveSelectionCursorPos] != MOVE_NONE)
             {
                 gGimmickMoves[sLastViewedMonIndex] = sMonSummaryScreen->moveIds[sMoveSelectionCursorPos];
-                PlaySE(SE_REGISTER);
+                PlaySE(SE_SELECT);
             }
         }
         break;
