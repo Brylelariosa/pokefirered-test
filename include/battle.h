@@ -456,8 +456,7 @@ struct BattleStruct
         struct MultiBattlePokemonTx multiBattleMons[3];
     } multiBuffer;
     u8 gimmickUsed[MAX_BATTLERS_COUNT];   // 4 bytes - tracks if gimmick used per battler
-    u16 gimmickMove[MAX_BATTLERS_COUNT];  // 8 bytes - stores the chosen 5th move
-    u8 padding_1E4[0x10];                 // reduced from 0x1C → 0x10 (still 0x200 total)
+    u8 padding_1E4[0x18];                 // restored padding (gimmickMove moved to global)
 }; // size == 0x200 bytes
 
 extern struct BattleStruct *gBattleStruct;
@@ -726,12 +725,12 @@ extern struct MultiBattlePokemonTx gMultiPartnerParty[3];
 extern u16 gRandomTurnNumber;
 
 // Gimmick system helpers
+extern u16 gGimmickMoves[];
 #define GIMMICK_MOVE_USED(battler)     (gBattleStruct->gimmickUsed[battler])
-#define GIMMICK_MOVE_ID(battler)       (gBattleStruct->gimmickMove[battler])
+#define GIMMICK_MOVE_ID(battler)       (gGimmickMoves[gBattlerPartyIndexes[battler]])
 #define SET_GIMMICK_USED(battler)      (gBattleStruct->gimmickUsed[battler] = TRUE)
 #define RESET_GIMMICK(battler)         \
 {                                      \
     gBattleStruct->gimmickUsed[battler] = FALSE; \
-    gBattleStruct->gimmickMove[battler] = MOVE_NONE; \
 }
 #endif // GUARD_BATTLE_H
