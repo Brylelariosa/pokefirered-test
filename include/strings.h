@@ -1545,4 +1545,8 @@ extern const u8 gText_PokeSum_EggOrigin_NicePlace[];
 extern const u8 gText_PokeSum_EggOrigin_Spa[];
 extern const u8 gText_PokeSum_EggOrigin_Trade[];
 
+// Gimmick move system
+extern const u8 gText_GimmickReady[];
+extern const u8 gText_GimmickUsed[];
+
 #endif //GUARD_STRINGS_H
