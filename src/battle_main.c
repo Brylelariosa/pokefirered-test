@@ -575,6 +575,7 @@ static void (*const sTurnActionsFuncsTable[])(void) =
     [B_ACTION_TRY_FINISH]             = HandleAction_TryFinish,
     [B_ACTION_FINISHED]               = HandleAction_ActionFinished,
     [B_ACTION_NOTHING_FAINTED]        = HandleAction_NothingIsFainted,
+    [B_ACTION_USE_GIMMICK_MOVE]
 };
 
 static void (*const sEndTurnFuncsTable[])(void) =
@@ -2235,6 +2236,10 @@ static void BattleStartClearSetData(void)
         gLockedMoves[i] = MOVE_NONE;
         gLastPrintedMoves[i] = MOVE_NONE;
         gBattleResources->flags->flags[i] = 0;
+
+        // Gimmick system reset
+        gBattleStruct->gimmickUsed[i] = FALSE;
+        gBattleStruct->gimmickMove[i] = MOVE_NONE;
     }
 
     for (i = 0; i < 2; i++)
