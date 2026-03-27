@@ -1,0 +1,47 @@
+name: Build Hack
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GAME_VERSION: FIRERED
+      GAME_LANGUAGE: ENGLISH
+      GAME_REVISION: 0
+      MODERN: 0
+      COMPARE: 0        # ← key difference, skips ROM matching check
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Checkout agbcc
+        uses: actions/checkout@master
+        with:
+          path: 'agbcc'
+          repository: 'pret/agbcc'
+
+      - name: Install binutils
+        run: |
+          sudo apt update
+          sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
+
+      - name: Install agbcc
+        run: |
+          ./build.sh
+          ./install.sh ../
+        working-directory: ./agbcc
+
+      - name: Build ROM
+        run: make -j$(nproc) all
+
+      - name: Upload ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: pokefirered-hack
+          path: pokefirered.gba
+          retention-days: 7
