@@ -455,7 +455,9 @@ struct BattleStruct
         struct LinkBattlerHeader linkBattlerHeader;
         struct MultiBattlePokemonTx multiBattleMons[3];
     } multiBuffer;
-    u8 padding_1E4[0x1C];
+    u8 gimmickUsed[MAX_BATTLERS_COUNT];   // 4 bytes - tracks if gimmick used per battler
+u16 gimmickMove[MAX_BATTLERS_COUNT];  // 8 bytes - stores the chosen 5th move
+u8 padding_1E4[0x10];                 // reduced from 0x1C → 0x10 (still 0x200 total)
 }; // size == 0x200 bytes
 
 extern struct BattleStruct *gBattleStruct;
