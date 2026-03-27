@@ -575,30 +575,25 @@ void HandleInputChooseMove(void)
             BattlePutTextOnWindow(gText_BattleSwitchWhich, B_WIN_SWITCH_PROMPT);
             gBattlerControllerFuncs[gActiveBattler] = HandleMoveSwitching;
         }
-}
     }
     else if (JOY_NEW(R_BUTTON))
     {
-        // Gimmick move activation via R button
-        if (GIMMICK_MOVE_ID(gActiveBattler) != MOVE_NONE)
-        {
-            if (!GIMMICK_MOVE_USED(gActiveBattler))
-            {
-                PlaySE(SE_SELECT);
-                BtlController_EmitTwoReturnValues(1, B_ACTION_USE_GIMMICK_MOVE, 0);
-                PlayerBufferExecCompleted();
-                ResetPaletteFadeControl();
-                BeginNormalPaletteFade(0xF0000, 0, 0, 0, RGB_WHITE);
-            }
-            else
-            {
-                // Already used — play error sound
-                PlaySE(SE_FAILURE);
-            }
-        }
-    }
-   // ← end of HandleInputChooseMove
+        if (GIMMICK_MOVE_ID(gActiveBattler) == MOVE_NONE)
+            return; // no gimmick move assigned
 
+        if (GIMMICK_MOVE_USED(gActiveBattler))
+        {
+            PlaySE(SE_FAILURE); // already used this battle
+            return;
+        }
+
+        PlaySE(SE_SELECT);
+        BtlController_EmitTwoReturnValues(1, B_ACTION_USE_GIMMICK_MOVE, 0);
+        PlayerBufferExecCompleted();
+        ResetPaletteFadeControl();
+        BeginNormalPaletteFade(0xF0000, 0, 0, 0, RGB_WHITE);
+    }
+}
 
 // not used
 static u32 HandleMoveInputUnused(void)
@@ -2462,6 +2457,16 @@ static void HandleChooseMoveAfterDma3(void)
 static void PlayerHandleChooseMove(void)
 {
     InitMoveSelectionsVarsAndStrings();
+
+    // Show R button gimmick hint at bottom of fight menu
+    if (GIMMICK_MOVE_ID(gActiveBattler) != MOVE_NONE)
+    {
+        BattlePutTextOnWindow(
+            GIMMICK_MOVE_USED(gActiveBattler) ? gText_GimmickUsed : gText_GimmickReady,
+            B_WIN_MSG
+        );
+    }
+
     gBattlerControllerFuncs[gActiveBattler] = HandleChooseMoveAfterDma3;
 }
 
