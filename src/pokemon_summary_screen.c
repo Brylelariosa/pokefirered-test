@@ -56,6 +56,9 @@ static void PokeSum_InitBgCoordsBeforePageFlips(void);
 static u8 PokeSum_IsPageFlipFinished(u8);
 static void PokeSum_SetHelpContext(void);
 static void Task_HandleInput_SelectMove(u8 id);
+static void OpenGimmickPicker(void);
+static void CloseGimmickPicker(void);
+static void DrawGimmickPicker(void);
 static void PokeSum_CopyNewBgTilemapBeforePageFlip_2(void);
 static void PokeSum_CopyNewBgTilemapBeforePageFlip(void);
 static void PokeSum_DrawPageProgressTiles(void);
@@ -324,9 +327,16 @@ static EWRAM_DATA struct PokerusIconObj * sPokerusIconObj = NULL;
 static EWRAM_DATA struct ShinyStarObjData * sShinyStarObjData = NULL;
 static EWRAM_DATA u8 sLastViewedMonIndex = 0;
 static EWRAM_DATA u8 sMoveSelectionCursorPos = 0;
-EWRAM_DATA u16 gGimmickMoves[PARTY_SIZE] = {0};
 static EWRAM_DATA u8 sMoveSwapCursorPos = 0;
 static EWRAM_DATA struct MonPicBounceState * sMonPicBounceState = NULL;
+
+// Gimmick move system
+EWRAM_DATA u16 gGimmickMoves[PARTY_SIZE] = {0};
+static EWRAM_DATA bool8 sGimmickPickerActive = FALSE;
+static EWRAM_DATA u8 sGimmickPickerCursor = 0;
+static EWRAM_DATA u8 sGimmickPickerScroll = 0;
+static EWRAM_DATA u8 sGimmickPickerCount = 0;
+static EWRAM_DATA u16 sGimmickPickerMoves[64] = {};
 
 extern const u32 gSummaryScreen_PageSkills_Tilemap[];
 extern const u32 gSummaryScreen_PageMoves_Tilemap[];
@@ -649,6 +659,9 @@ static const u8 sPrintMoveTextColors[][3] = {
     {0, 3, 4},
     {0, 5, 6}
 };
+
+static const u8 sText_GimmickPickerTitle[] = _("GIMMICK MOVE");
+static const u8 sText_GimmickSetMark[] = _("*");
 
 static const struct BgTemplate sBgTempaltes[] = 
 {
@@ -1124,6 +1137,58 @@ static void Task_InputHandler_Info(u8 taskId)
         else if (FuncIsActiveTask(Task_PokeSum_SwitchDisplayedPokemon))
             return;
 
+        // Gimmick picker intercepts all input when open
+        if (sGimmickPickerActive)
+        {
+            if (JOY_NEW(DPAD_UP))
+            {
+                if (sGimmickPickerCursor > 0)
+                {
+                    sGimmickPickerCursor--;
+                    if (sGimmickPickerCursor < sGimmickPickerScroll)
+                        sGimmickPickerScroll--;
+                }
+                else
+                {
+                    sGimmickPickerCursor = sGimmickPickerCount - 1;
+                    sGimmickPickerScroll = (sGimmickPickerCount > 8) ? sGimmickPickerCount - 8 : 0;
+                }
+                PlaySE(SE_SELECT);
+                DrawGimmickPicker();
+            }
+            else if (JOY_NEW(DPAD_DOWN))
+            {
+                if (sGimmickPickerCursor < sGimmickPickerCount - 1)
+                {
+                    sGimmickPickerCursor++;
+                    if (sGimmickPickerCursor >= sGimmickPickerScroll + 8)
+                        sGimmickPickerScroll++;
+                }
+                else
+                {
+                    sGimmickPickerCursor = 0;
+                    sGimmickPickerScroll = 0;
+                }
+                PlaySE(SE_SELECT);
+                DrawGimmickPicker();
+            }
+            else if (JOY_NEW(A_BUTTON) || JOY_NEW(SELECT_BUTTON))
+            {
+                if (sGimmickPickerCount > 0)
+                {
+                    gGimmickMoves[sLastViewedMonIndex] = sGimmickPickerMoves[sGimmickPickerCursor];
+                    PlaySE(SE_SELECT);
+                }
+                CloseGimmickPicker();
+            }
+            else if (JOY_NEW(B_BUTTON))
+            {
+                PlaySE(SE_SELECT);
+                CloseGimmickPicker();
+            }
+            return;
+        }
+
         if (sMonSummaryScreen->curPageIndex != PSS_PAGE_MOVES_INFO)
         {
             if (IsPageFlipInput(1) == TRUE)
@@ -1196,6 +1261,14 @@ static void Task_InputHandler_Info(u8 taskId)
             else if (JOY_NEW(B_BUTTON))
             {
                 sMonSummaryScreen->state3270 = PSS_STATE3270_ATEXIT_FADEOUT;
+            }
+            else if (JOY_NEW(SELECT_BUTTON))
+            {
+                if (!sMonSummaryScreen->isEnemyParty
+                    && sMonSummaryScreen->curPageIndex == PSS_PAGE_MOVES)
+                {
+                    OpenGimmickPicker();
+                }
             }
         }
         break;
@@ -3650,16 +3723,6 @@ static void Task_HandleInput_SelectMove(u8 taskId)
             sMonSummaryScreen->curPageIndex--;
             sMonSummaryScreen->selectMoveInputHandlerState = 1;
         }
-        else if (JOY_NEW(SELECT_BUTTON))
-        {
-            if (sMonSummaryScreen->isEnemyParty == FALSE
-                && sMoveSelectionCursorPos < 4
-                && sMonSummaryScreen->moveIds[sMoveSelectionCursorPos] != MOVE_NONE)
-            {
-                gGimmickMoves[sLastViewedMonIndex] = sMonSummaryScreen->moveIds[sMoveSelectionCursorPos];
-                PlaySE(SE_SELECT);
-            }
-        }
         break;
     case 1:
         gTasks[sMonSummaryScreen->inputHandlerTaskId].func = Task_BackOutOfSelectMove;
@@ -5232,4 +5295,116 @@ static bool32 MapSecIsInKantoOrSevii(u8 mapSec)
 static void ShowPokemonSummaryScreen_NullParty(void)
 {
     ShowPokemonSummaryScreen(NULL, 0, 0, CB2_ReturnToField, PSS_MODE_NORMAL);
+}
+
+// ===========================================================
+// Gimmick Move Picker
+// Opened by pressing SELECT on the Moves page.
+// Shows the full level-up learnset for the displayed Pokémon.
+// UP/DOWN to scroll, A or SELECT to confirm, B to cancel.
+// ===========================================================
+
+static void OpenGimmickPicker(void)
+{
+    u16 species;
+    u8 i, count;
+    u16 allMoves[64];
+
+    species = GetMonData(&sMonSummaryScreen->currentMon, MON_DATA_SPECIES);
+    count = GetLevelUpMovesBySpecies(species, allMoves);
+    if (count > 64)
+        count = 64;
+
+    // Deduplicate: keep only unique move IDs
+    sGimmickPickerCount = 0;
+    for (i = 0; i < count; i++)
+    {
+        u8 j;
+        bool8 dup = FALSE;
+        for (j = 0; j < sGimmickPickerCount; j++)
+        {
+            if (sGimmickPickerMoves[j] == allMoves[i])
+            {
+                dup = TRUE;
+                break;
+            }
+        }
+        if (!dup && allMoves[i] != MOVE_NONE)
+            sGimmickPickerMoves[sGimmickPickerCount++] = allMoves[i];
+    }
+
+    if (sGimmickPickerCount == 0)
+        return; // no learnset moves — do nothing
+
+    // Start cursor on currently set gimmick move if any
+    sGimmickPickerCursor = 0;
+    sGimmickPickerScroll = 0;
+    for (i = 0; i < sGimmickPickerCount; i++)
+    {
+        if (sGimmickPickerMoves[i] == gGimmickMoves[sLastViewedMonIndex])
+        {
+            sGimmickPickerCursor = i;
+            sGimmickPickerScroll = (i >= 8) ? i - 7 : 0;
+            break;
+        }
+    }
+
+    sGimmickPickerActive = TRUE;
+    DrawGimmickPicker();
+}
+
+static void DrawGimmickPicker(void)
+{
+    u8 i;
+    u8 winId = sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE];
+    u8 visibleRows = (sGimmickPickerCount < 8) ? sGimmickPickerCount : 8;
+
+    FillWindowPixelBuffer(winId, 0);
+
+    // Title
+    AddTextPrinterParameterized3(winId, FONT_NORMAL,
+        2, 0, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
+        sText_GimmickPickerTitle);
+
+    for (i = 0; i < visibleRows; i++)
+    {
+        u8 idx = sGimmickPickerScroll + i;
+        u8 y = (i + 1) * 14 + 2;
+        const u8 *colors = (idx == sGimmickPickerCursor)
+            ? sPrintMoveTextColors[2]
+            : sPrintMoveTextColors[0];
+
+        // Draw cursor arrow
+        if (idx == sGimmickPickerCursor)
+            AddTextPrinterParameterized3(winId, FONT_NORMAL,
+                2, y, colors, TEXT_SKIP_DRAW, (const u8 *)"\x02");
+
+        // Move name
+        AddTextPrinterParameterized3(winId, FONT_NORMAL,
+            12, y, colors, TEXT_SKIP_DRAW,
+            gMoveNames[sGimmickPickerMoves[idx]]);
+
+        // Mark currently assigned gimmick move with *
+        if (sGimmickPickerMoves[idx] == gGimmickMoves[sLastViewedMonIndex])
+            AddTextPrinterParameterized3(winId, FONT_NORMAL,
+                116, y, sPrintMoveTextColors[3], TEXT_SKIP_DRAW,
+                sText_GimmickSetMark);
+    }
+
+    PutWindowTilemap(winId);
+    CopyWindowToVram(winId, 2);
+}
+
+static void CloseGimmickPicker(void)
+{
+    sGimmickPickerActive = FALSE;
+    sGimmickPickerCursor = 0;
+    sGimmickPickerScroll = 0;
+    sGimmickPickerCount = 0;
+
+    // Redraw the moves page normally
+    PokeSum_PrintRightPaneText();
+    PokeSum_PrintBottomPaneText();
+    PokeSum_PrintAbilityDataOrMoveTypes();
+    CopyWindowToVram(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], 2);
 }
