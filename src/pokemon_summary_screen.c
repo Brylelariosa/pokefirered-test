@@ -661,7 +661,6 @@ static const u8 sPrintMoveTextColors[][3] = {
 };
 
 static const u8 sText_GimmickPickerTitle[] = _("GIMMICK MOVE");
-static const u8 sText_GimmickSetMark[] = _("*");
 
 static const struct BgTemplate sBgTempaltes[] = 
 {
@@ -5383,12 +5382,6 @@ static void DrawGimmickPicker(void)
         AddTextPrinterParameterized3(winId, FONT_NORMAL,
             12, y, colors, TEXT_SKIP_DRAW,
             gMoveNames[sGimmickPickerMoves[idx]]);
-
-        // Mark currently assigned gimmick move with *
-        if (sGimmickPickerMoves[idx] == gGimmickMoves[sLastViewedMonIndex])
-            AddTextPrinterParameterized3(winId, FONT_NORMAL,
-                116, y, sPrintMoveTextColors[3], TEXT_SKIP_DRAW,
-                sText_GimmickSetMark);
     }
 
     PutWindowTilemap(winId);
