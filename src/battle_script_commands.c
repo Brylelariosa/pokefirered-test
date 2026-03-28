@@ -20,6 +20,8 @@
 #include "field_specials.h"
 #include "battle.h"
 #include "battle_message.h"
+
+extern u16 gGimmickMoves[];
 #include "battle_anim.h"
 #include "battle_ai_script_commands.h"
 #include "battle_scripts.h"
@@ -1218,6 +1220,8 @@ static void Cmd_damagecalc(void)
         gBattleMoveDamage *= 2;
     if (gProtectStructs[gBattlerAttacker].helpingHand)
         gBattleMoveDamage = gBattleMoveDamage * 15 / 10;
+    if (gCurrentMove == gGimmickMoves[gBattlerPartyIndexes[gBattlerAttacker]] && gCurrentMove != MOVE_NONE)
+        gBattleMoveDamage = gBattleMoveDamage * 11 / 10;
 
     gBattlescriptCurrInstr++;
 }
