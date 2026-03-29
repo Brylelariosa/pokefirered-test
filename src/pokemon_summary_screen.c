@@ -3576,6 +3576,58 @@ static void Task_HandleInput_SelectMove(u8 taskId)
         if (IsActiveOverworldLinkBusy() == TRUE || IsLinkRecvQueueAtOverworldMax() == TRUE)
             return;
 
+        // Gimmick picker intercepts all input when open
+        if (sGimmickPickerActive)
+        {
+            if (JOY_NEW(DPAD_UP))
+            {
+                if (sGimmickPickerCursor > 0)
+                {
+                    sGimmickPickerCursor--;
+                    if (sGimmickPickerCursor < sGimmickPickerScroll)
+                        sGimmickPickerScroll--;
+                }
+                else
+                {
+                    sGimmickPickerCursor = sGimmickPickerCount - 1;
+                    sGimmickPickerScroll = (sGimmickPickerCount > 8) ? sGimmickPickerCount - 8 : 0;
+                }
+                PlaySE(SE_SELECT);
+                DrawGimmickPicker();
+            }
+            else if (JOY_NEW(DPAD_DOWN))
+            {
+                if (sGimmickPickerCursor < sGimmickPickerCount - 1)
+                {
+                    sGimmickPickerCursor++;
+                    if (sGimmickPickerCursor >= sGimmickPickerScroll + 8)
+                        sGimmickPickerScroll++;
+                }
+                else
+                {
+                    sGimmickPickerCursor = 0;
+                    sGimmickPickerScroll = 0;
+                }
+                PlaySE(SE_SELECT);
+                DrawGimmickPicker();
+            }
+            else if (JOY_NEW(A_BUTTON) || JOY_NEW(SELECT_BUTTON))
+            {
+                if (sGimmickPickerCount > 0)
+                {
+                    gGimmickMoves[sLastViewedMonIndex] = sGimmickPickerMoves[sGimmickPickerCursor];
+                    PlaySE(SE_SELECT);
+                }
+                CloseGimmickPicker();
+            }
+            else if (JOY_NEW(B_BUTTON))
+            {
+                PlaySE(SE_SELECT);
+                CloseGimmickPicker();
+            }
+            return;
+        }
+
         if (JOY_NEW(DPAD_UP))
         {
             if (sMoveSelectionCursorPos > 0)
@@ -3721,6 +3773,11 @@ static void Task_HandleInput_SelectMove(u8 taskId)
             PokeSum_RemoveWindows(sMonSummaryScreen->curPageIndex);
             sMonSummaryScreen->curPageIndex--;
             sMonSummaryScreen->selectMoveInputHandlerState = 1;
+        }
+        else if (JOY_NEW(SELECT_BUTTON))
+        {
+            if (!sMonSummaryScreen->isEnemyParty && !sMonSummaryScreen->isSwappingMoves)
+                OpenGimmickPicker();
         }
         break;
     case 1:
@@ -5333,7 +5390,10 @@ static void OpenGimmickPicker(void)
     }
 
     if (sGimmickPickerCount == 0)
-        return; // no learnset moves — do nothing
+    {
+        PlaySE(SE_FAILURE); // no learnset moves
+        return;
+    }
 
     // Start cursor on currently set gimmick move if any
     sGimmickPickerCursor = 0;
@@ -5369,18 +5429,13 @@ static void DrawGimmickPicker(void)
     {
         u8 idx = sGimmickPickerScroll + i;
         u8 y = (i + 1) * 14 + 2;
-        const u8 *colors = (idx == sGimmickPickerCursor)
-            ? sPrintMoveTextColors[2]
-            : sPrintMoveTextColors[0];
+        bool8 selected = (idx == sGimmickPickerCursor);
+        const u8 *colors = selected ? sPrintMoveTextColors[2] : sPrintMoveTextColors[0];
+        // Selected item is indented right to visually distinguish it
+        u8 x = selected ? 16 : 4;
 
-        // Draw cursor arrow
-        if (idx == sGimmickPickerCursor)
-            AddTextPrinterParameterized3(winId, FONT_NORMAL,
-                2, y, colors, TEXT_SKIP_DRAW, (const u8 *)"\x02");
-
-        // Move name
         AddTextPrinterParameterized3(winId, FONT_NORMAL,
-            12, y, colors, TEXT_SKIP_DRAW,
+            x, y, colors, TEXT_SKIP_DRAW,
             gMoveNames[sGimmickPickerMoves[idx]]);
     }
 
