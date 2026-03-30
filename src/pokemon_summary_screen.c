@@ -1171,7 +1171,7 @@ static void Task_InputHandler_Info(u8 taskId)
                 PlaySE(SE_SELECT);
                 DrawGimmickPicker();
             }
-            else if (JOY_NEW(A_BUTTON) || JOY_NEW(SELECT_BUTTON))
+            else if (JOY_NEW(A_BUTTON) || JOY_NEW(START_BUTTON))
             {
                 if (sGimmickPickerCount > 0)
                 {
@@ -1261,7 +1261,7 @@ static void Task_InputHandler_Info(u8 taskId)
             {
                 sMonSummaryScreen->state3270 = PSS_STATE3270_ATEXIT_FADEOUT;
             }
-            else if (JOY_NEW(SELECT_BUTTON))
+            else if (JOY_NEW(START_BUTTON))
             {
                 if (!sMonSummaryScreen->isEnemyParty
                     && sMonSummaryScreen->curPageIndex == PSS_PAGE_MOVES)
@@ -3611,7 +3611,7 @@ static void Task_HandleInput_SelectMove(u8 taskId)
                 PlaySE(SE_SELECT);
                 DrawGimmickPicker();
             }
-            else if (JOY_NEW(A_BUTTON) || JOY_NEW(SELECT_BUTTON))
+            else if (JOY_NEW(A_BUTTON) || JOY_NEW(START_BUTTON))
             {
                 if (sGimmickPickerCount > 0)
                 {
@@ -3774,7 +3774,7 @@ static void Task_HandleInput_SelectMove(u8 taskId)
             sMonSummaryScreen->curPageIndex--;
             sMonSummaryScreen->selectMoveInputHandlerState = 1;
         }
-        else if (JOY_NEW(SELECT_BUTTON))
+        else if (JOY_NEW(START_BUTTON))
         {
             if (!sMonSummaryScreen->isEnemyParty && !sMonSummaryScreen->isSwappingMoves)
                 OpenGimmickPicker();
@@ -5418,24 +5418,22 @@ static void DrawGimmickPicker(void)
     u8 winId = sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE];
     u8 visibleRows = (sGimmickPickerCount < 8) ? sGimmickPickerCount : 8;
 
-    FillWindowPixelBuffer(winId, 0);
+    FillWindowPixelBuffer(winId, PIXEL_FILL(1));
 
-    // Title
+    // Title bar
     AddTextPrinterParameterized3(winId, FONT_NORMAL,
-        2, 0, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
+        4, 2, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
         sText_GimmickPickerTitle);
 
     for (i = 0; i < visibleRows; i++)
     {
         u8 idx = sGimmickPickerScroll + i;
-        u8 y = (i + 1) * 14 + 2;
+        u8 y = (i + 1) * 16 + 4;
         bool8 selected = (idx == sGimmickPickerCursor);
         const u8 *colors = selected ? sPrintMoveTextColors[2] : sPrintMoveTextColors[0];
-        // Selected item is indented right to visually distinguish it
-        u8 x = selected ? 16 : 4;
 
         AddTextPrinterParameterized3(winId, FONT_NORMAL,
-            x, y, colors, TEXT_SKIP_DRAW,
+            8, y, colors, TEXT_SKIP_DRAW,
             gMoveNames[sGimmickPickerMoves[idx]]);
     }
 
