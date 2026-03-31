@@ -5,13 +5,15 @@
 
 @ Called by HandleAction_UseGimmickMove in battle_main.c
 BattleScript_GimmickMove::
+    @ Set flags: no PP deduct, allow no PP
+    orword gHitMarker, HITMARKER_NO_PPDEDUCT | HITMARKER_ALLOW_NO_PP
     attackcanceler
-    accuracycheck BattleScript_GimmickMoveMissed, ACC_CURR_MOVE
     attackstring
     critcalc
     damagecalc
     typecalc
     adjustnormaldamage
+    accuracycheck BattleScript_GimmickMoveMissed, ACC_CURR_MOVE
     attackanimation
     waitanimation
     effectivenesssound
