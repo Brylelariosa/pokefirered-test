@@ -5415,36 +5415,37 @@ static void OpenGimmickPicker(void)
 static void DrawGimmickPicker(void)
 {
     u8 i;
-    u8 listWinId  = sMonSummaryScreen->windowIds[POKESUM_WIN_TRAINER_MEMO];
-    u8 titleWinId = sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE];
-    u8 visibleRows = (sGimmickPickerCount < 6) ? sGimmickPickerCount : 6;
+    u8 winId = sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE];
+    // RIGHT_PANE on moves page: 80px wide x 144px tall — fits 8 rows at 16px each
+    u8 visibleRows = (sGimmickPickerCount < 8) ? sGimmickPickerCount : 8;
 
-    FillWindowPixelBuffer(titleWinId, PIXEL_FILL(0));
-    FillWindowPixelBuffer(listWinId,  PIXEL_FILL(0));
+    FillWindowPixelBuffer(winId, PIXEL_FILL(0));
 
-    // Title in right pane
-    AddTextPrinterParameterized3(titleWinId, FONT_NORMAL,
-        4, 4, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
+    // Title row
+    AddTextPrinterParameterized3(winId, FONT_SMALL,
+        4, 2, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
         sText_GimmickPickerTitle);
 
-    // Move list in trainer memo window (wider, better for list)
+    // Divider line (blank row to separate title from list)
+    // Move list rows
     for (i = 0; i < visibleRows; i++)
     {
         u8 idx = sGimmickPickerScroll + i;
-        u8 y = i * 15 + 4;
+        u8 y = i * 16 + 18;
         bool8 selected = (idx == sGimmickPickerCursor);
         const u8 *colors = selected ? sPrintMoveTextColors[2] : sPrintMoveTextColors[0];
-        u8 x = selected ? 10 : 4;
 
-        AddTextPrinterParameterized3(listWinId, FONT_NORMAL,
-            x, y, colors, TEXT_SKIP_DRAW,
+        // Filled background for selected row
+        if (selected)
+            FillWindowPixelRect(winId, PIXEL_FILL(2), 0, y - 1, 80, 15);
+
+        AddTextPrinterParameterized3(winId, FONT_NORMAL,
+            4, y, colors, TEXT_SKIP_DRAW,
             gMoveNames[sGimmickPickerMoves[idx]]);
     }
 
-    PutWindowTilemap(titleWinId);
-    PutWindowTilemap(listWinId);
-    CopyWindowToVram(titleWinId, 2);
-    CopyWindowToVram(listWinId,  2);
+    PutWindowTilemap(winId);
+    CopyWindowToVram(winId, 2);
 }
 
 static void CloseGimmickPicker(void)
@@ -5454,7 +5455,6 @@ static void CloseGimmickPicker(void)
     sGimmickPickerScroll = 0;
     sGimmickPickerCount = 0;
 
-    // Redraw both windows back to normal
     PokeSum_PrintRightPaneText();
     PokeSum_PrintBottomPaneText();
     PokeSum_PrintAbilityDataOrMoveTypes();
