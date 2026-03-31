@@ -4510,6 +4510,7 @@ static void HandleAction_UseGimmickMove(void)
     // Execute the gimmick move like a normal move
     gChosenMove = GIMMICK_MOVE_ID(gBattlerAttacker);
     gCurrentMove = gChosenMove;
+    gBattlerTarget = GetBattlerAtPosition((GetBattlerPosition(gBattlerAttacker) & BIT_SIDE) ^ BIT_SIDE);
     gBattle_BG0_X = 0;
     gBattle_BG0_Y = 0;
 
