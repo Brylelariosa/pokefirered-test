@@ -3273,6 +3273,11 @@ static void HandleTurnActionSelectionState(void)
                     case 3 ... 9:
                         gChosenActionByBattler[gActiveBattler] = gBattleBufferB[gActiveBattler][1];
                         return;
+                    case B_ACTION_USE_GIMMICK_MOVE:
+                        // START pressed on move screen - switch to gimmick action
+                        gChosenActionByBattler[gActiveBattler] = B_ACTION_USE_GIMMICK_MOVE;
+                        gBattleCommunication[gActiveBattler]++;
+                        break;
                     default:
                         if ((gBattleBufferB[gActiveBattler][2] | (gBattleBufferB[gActiveBattler][3] << 8)) == 0xFFFF)
                         {
