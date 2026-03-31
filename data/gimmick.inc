@@ -5,31 +5,30 @@
 
 @ Called by HandleAction_UseGimmickMove in battle_main.c
 BattleScript_GimmickMove::
-    @ Print "[MON] used [MOVE]!" message
-    printstring STRINGID_USEDMOVE
-    waitmessage B_WAIT_TIME_LONG
-
-    @ Play move animation on attacker
+    attackcanceler
+    accuracycheck BattleScript_GimmickMoveMissed, ACC_CURR_MOVE
+    attackstring
+    critcalc
+    damagecalc
+    typecalc
+    adjustnormaldamage
     attackanimation
     waitanimation
-
-    @ Deal damage / apply effect like a normal move
     effectivenesssound
     hitanimation BS_TARGET
     waitanimation
-
-    @ Deduct HP
     healthbarupdate BS_TARGET
     datahpupdate BS_TARGET
     critmessage
     waitmessage B_WAIT_TIME_LONG
-
-    @ Show effectiveness message (super effective / not very effective)
     resultmessage
     waitmessage B_WAIT_TIME_LONG
+    end2
 
-    @ End turn
-    end
+BattleScript_GimmickMoveMissed::
+    printstring STRINGID_ATTACKMISSED
+    waitmessage B_WAIT_TIME_LONG
+    end2
 
 @ Called if gimmick move is MOVE_NONE or already used
 BattleScript_GimmickMoveFailed::
