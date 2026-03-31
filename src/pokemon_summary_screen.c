@@ -5415,30 +5415,36 @@ static void OpenGimmickPicker(void)
 static void DrawGimmickPicker(void)
 {
     u8 i;
-    u8 winId = sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE];
-    u8 visibleRows = (sGimmickPickerCount < 8) ? sGimmickPickerCount : 8;
+    u8 listWinId  = sMonSummaryScreen->windowIds[POKESUM_WIN_TRAINER_MEMO];
+    u8 titleWinId = sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE];
+    u8 visibleRows = (sGimmickPickerCount < 6) ? sGimmickPickerCount : 6;
 
-    FillWindowPixelBuffer(winId, PIXEL_FILL(1));
+    FillWindowPixelBuffer(titleWinId, PIXEL_FILL(0));
+    FillWindowPixelBuffer(listWinId,  PIXEL_FILL(0));
 
-    // Title bar
-    AddTextPrinterParameterized3(winId, FONT_NORMAL,
-        4, 2, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
+    // Title in right pane
+    AddTextPrinterParameterized3(titleWinId, FONT_NORMAL,
+        4, 4, sPrintMoveTextColors[1], TEXT_SKIP_DRAW,
         sText_GimmickPickerTitle);
 
+    // Move list in trainer memo window (wider, better for list)
     for (i = 0; i < visibleRows; i++)
     {
         u8 idx = sGimmickPickerScroll + i;
-        u8 y = (i + 1) * 16 + 4;
+        u8 y = i * 15 + 4;
         bool8 selected = (idx == sGimmickPickerCursor);
         const u8 *colors = selected ? sPrintMoveTextColors[2] : sPrintMoveTextColors[0];
+        u8 x = selected ? 10 : 4;
 
-        AddTextPrinterParameterized3(winId, FONT_NORMAL,
-            8, y, colors, TEXT_SKIP_DRAW,
+        AddTextPrinterParameterized3(listWinId, FONT_NORMAL,
+            x, y, colors, TEXT_SKIP_DRAW,
             gMoveNames[sGimmickPickerMoves[idx]]);
     }
 
-    PutWindowTilemap(winId);
-    CopyWindowToVram(winId, 2);
+    PutWindowTilemap(titleWinId);
+    PutWindowTilemap(listWinId);
+    CopyWindowToVram(titleWinId, 2);
+    CopyWindowToVram(listWinId,  2);
 }
 
 static void CloseGimmickPicker(void)
@@ -5448,9 +5454,10 @@ static void CloseGimmickPicker(void)
     sGimmickPickerScroll = 0;
     sGimmickPickerCount = 0;
 
-    // Redraw the moves page normally
+    // Redraw both windows back to normal
     PokeSum_PrintRightPaneText();
     PokeSum_PrintBottomPaneText();
     PokeSum_PrintAbilityDataOrMoveTypes();
     CopyWindowToVram(sMonSummaryScreen->windowIds[POKESUM_WIN_RIGHT_PANE], 2);
+    CopyWindowToVram(sMonSummaryScreen->windowIds[POKESUM_WIN_TRAINER_MEMO], 2);
 }
