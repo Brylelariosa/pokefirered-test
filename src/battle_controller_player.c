@@ -307,21 +307,6 @@ static void HandleInputChooseAction(void)
     {
         SwapHpBarsWithHpText();
     }
-    else if (JOY_NEW(SELECT_BUTTON))
-    {
-        if (GIMMICK_MOVE_ID(gActiveBattler) == MOVE_NONE)
-            return;
-
-        if (GIMMICK_MOVE_USED(gActiveBattler))
-        {
-            PlaySE(SE_FAILURE);
-            return;
-        }
-
-        PlaySE(SE_SELECT);
-        BtlController_EmitTwoReturnValues(1, B_ACTION_USE_GIMMICK_MOVE, 0);
-        PlayerBufferExecCompleted();
-    }
 }
 
 // Unused
@@ -590,6 +575,23 @@ void HandleInputChooseMove(void)
             BattlePutTextOnWindow(gText_BattleSwitchWhich, B_WIN_SWITCH_PROMPT);
             gBattlerControllerFuncs[gActiveBattler] = HandleMoveSwitching;
         }
+    }
+    else if (JOY_NEW(START_BUTTON))
+    {
+        if (GIMMICK_MOVE_ID(gActiveBattler) == MOVE_NONE)
+            return;
+
+        if (GIMMICK_MOVE_USED(gActiveBattler))
+        {
+            PlaySE(SE_FAILURE);
+            return;
+        }
+
+        PlaySE(SE_SELECT);
+        BtlController_EmitTwoReturnValues(1, B_ACTION_USE_GIMMICK_MOVE, 0);
+        PlayerBufferExecCompleted();
+        ResetPaletteFadeControl();
+        BeginNormalPaletteFade(0xF0000, 0, 0, 0, RGB_WHITE);
     }
 }
 
